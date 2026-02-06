@@ -14,15 +14,15 @@ class Author
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["book:show"])]
+    #[Groups(["book:view"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["book:show"])]
+    #[Groups(["book:view"])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(["book:show"])]
+    #[Groups(["book:view"])]
     private ?string $firstName = null;
 
     /**

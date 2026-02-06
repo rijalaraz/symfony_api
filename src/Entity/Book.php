@@ -13,19 +13,19 @@ class Book
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["book:show"])]
+    #[Groups(["book:view"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["book:show"])]
+    #[Groups(["book:view"])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(["book:show"])]
+    #[Groups(["book:view"])]
     private ?string $coverText = null;
 
     #[ORM\ManyToOne(inversedBy: 'books')]
-    #[Groups(["book:show"])]
+    #[Groups(["book:view"])]
     private ?Author $author = null;
 
     public function getId(): ?int
