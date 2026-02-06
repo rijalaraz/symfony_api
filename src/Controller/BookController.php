@@ -20,7 +20,7 @@ final class BookController extends AbstractController
 
         return $this->json([
             'books' => $books,
-        ]);
+        ], context:['groups' => 'book:show']);
     }
 
     #[Route('/api/books/{id}', name: 'detail_book', methods: ['GET'])]
@@ -30,6 +30,6 @@ final class BookController extends AbstractController
 
         return $this->json([
             'book' => $book,
-        ]);
+        ], context:['groups' => 'book:show']);
     }
 }
