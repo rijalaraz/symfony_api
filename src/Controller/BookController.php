@@ -14,6 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class BookController extends AbstractController
 {
@@ -55,11 +56,18 @@ final class BookController extends AbstractController
     }
 
     #[Route('/api/books', name: 'create_book', methods: ['POST'])]
-    public function createBook(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AuthorRepository $authorRepository): JsonResponse
+    public function createBook(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AuthorRepository $authorRepository, ValidatorInterface $validator): JsonResponse
     {
         $book = $serializer->deserialize($request->getContent(),
             Book::class,
             'json');
+
+        $errors = $validator->validate($book);
+        if (count($errors) > 0) {
+            return $this->json([
+                'errors' => $errors,
+            ], status: Response::HTTP_BAD_REQUEST);
+        }
 
         // Récupération de l'ensemble des données envoyées sous forme de tableau
         $content = $request->toArray();
