@@ -32,7 +32,7 @@ class Book
     #[Groups(["book:view"])]
     private ?string $coverText = null;
 
-    #[ORM\ManyToOne(inversedBy: 'books')]
+    #[ORM\ManyToOne(inversedBy: 'books', cascade: ['persist'])]
     #[Groups(["book:view"])]
     private ?Author $author = null;
 
