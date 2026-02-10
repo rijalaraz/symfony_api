@@ -4,30 +4,32 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">=8.4",
+        "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "doctrine/doctrine-bundle": "^3.2",
-        "doctrine/doctrine-migrations-bundle": "^4.0",
+        "doctrine/doctrine-bundle": "^2.13",
+        "doctrine/doctrine-migrations-bundle": "^3.3",
         "doctrine/orm": "^3.6",
+        "lexik/jwt-authentication-bundle": "^3.2",
         "phpdocumentor/reflection-docblock": "^5.6",
         "phpstan/phpdoc-parser": "^2.3",
-        "symfony/console": "8.0.*",
-        "symfony/dotenv": "8.0.*",
+        "symfony/console": "6.4.*",
+        "symfony/dotenv": "6.4.*",
         "symfony/flex": "^2",
-        "symfony/framework-bundle": "8.0.*",
-        "symfony/property-access": "8.0.*",
-        "symfony/property-info": "8.0.*",
-        "symfony/runtime": "8.0.*",
-        "symfony/serializer": "8.0.*",
-        "symfony/validator": "8.0.*",
-        "symfony/yaml": "8.0.*"
+        "symfony/framework-bundle": "6.4.*",
+        "symfony/property-access": "6.4.*",
+        "symfony/property-info": "6.4.*",
+        "symfony/runtime": "6.4.*",
+        "symfony/security-bundle": "6.4.*",
+        "symfony/serializer": "6.4.*",
+        "symfony/validator": "6.4.*",
+        "symfony/yaml": "6.4.*"
     },
     "require-dev": {
-        "doctrine/doctrine-fixtures-bundle": "^4.3",
-        "phpunit/phpunit": "^12.5",
-        "symfony/browser-kit": "8.0.*",
-        "symfony/css-selector": "8.0.*",
+        "doctrine/doctrine-fixtures-bundle": "^3.5",
+        "phpunit/phpunit": "^10.5",
+        "symfony/browser-kit": "6.4.*",
+        "symfony/css-selector": "6.4.*",
         "symfony/maker-bundle": "^1.65"
     },
     "config": {
@@ -79,7 +81,7 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "8.0.*"
+            "require": "6.4.*"
         }
     }
 }
