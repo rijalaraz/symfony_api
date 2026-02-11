@@ -31,9 +31,9 @@ final class BookController extends AbstractController
         $idCache = 'books_page_' . $page . '_limit_' . $limit;
 
         $books = $cache->get($idCache, function(ItemInterface $item) use ($bookRepository, $idCache) {
-            echo "Cache miss for $idCache\n";
+            echo "Cache-miss-for-$idCache\n";
             $item->tag('books_cache');
-            return $bookRepository->findAll();
+            return $bookRepository->findAllBooksWithEagerLoading();
         });
 
         $pagination = $paginator->paginate(
