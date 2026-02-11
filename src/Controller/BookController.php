@@ -17,22 +17,34 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 final class BookController extends AbstractController
 {
     #[Route('/api/books', name: 'all_books', methods: ['GET'])]
-    public function getAllBooks(BookRepository $bookRepository, SerializerInterface $serializer, Request $request, PaginatorInterface $paginator): JsonResponse
+    public function getAllBooks(BookRepository $bookRepository, SerializerInterface $serializer, Request $request, PaginatorInterface $paginator, TagAwareCacheInterface $cache): JsonResponse
     {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 5);
 
-        $books = $bookRepository->findAll();
+        $idCache = 'books_page_' . $page . '_limit_' . $limit;
 
-        $pagination = $paginator->paginate(
-            $books,
-            $page,
-            $limit
-        );
+        $pagination = $cache->get($idCache, function(ItemInterface $item) use ($bookRepository, $page, $limit, $paginator, $idCache) {
+            echo "Cache miss for $idCache\n";
+            $item->tag('books_cache');
+            return $paginator->paginate(
+                $bookRepository->findAll(),
+                $page,
+                $limit
+            );
+        });
+
+        // $pagination = $paginator->paginate(
+        //     $bookRepository->findAll(),
+        //     $page,
+        //     $limit
+        // );
 
         // $jsonBooks = $serializer->serialize($books,'json');
 
