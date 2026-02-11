@@ -16,6 +16,15 @@ class BookRepository extends ServiceEntityRepository
         parent::__construct($registry, Book::class);
     }
 
+    public function findAllBooks(): array
+    {
+        $qb = $this->createQueryBuilder('b');
+        $query = $qb->getQuery();
+        $query->setFetchMode(Book::class, 'author', \Doctrine\ORM\Mapping\ClassMetadata::FETCH_EAGER);
+        $results = $query->getResult();
+        return $results;
+    }
+
     public function findAllWithPagination(int $page, int $limit): array
     {
         $offset = ($page - 1) * $limit;

@@ -30,21 +30,17 @@ final class BookController extends AbstractController
 
         $idCache = 'books_page_' . $page . '_limit_' . $limit;
 
-        $pagination = $cache->get($idCache, function(ItemInterface $item) use ($bookRepository, $page, $limit, $paginator, $idCache) {
+        $books = $cache->get($idCache, function(ItemInterface $item) use ($bookRepository, $idCache) {
             echo "Cache miss for $idCache\n";
             $item->tag('books_cache');
-            return $paginator->paginate(
-                $bookRepository->findAll(),
-                $page,
-                $limit
-            );
+            return $bookRepository->findAll();
         });
 
-        // $pagination = $paginator->paginate(
-        //     $bookRepository->findAll(),
-        //     $page,
-        //     $limit
-        // );
+        $pagination = $paginator->paginate(
+            $books,
+            $page,
+            $limit
+        );
 
         // $jsonBooks = $serializer->serialize($books,'json');
 
