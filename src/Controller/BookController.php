@@ -6,6 +6,7 @@ use App\Entity\Book;
 use App\Repository\AuthorRepository;
 use App\Repository\BookRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,19 +21,31 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class BookController extends AbstractController
 {
     #[Route('/api/books', name: 'all_books', methods: ['GET'])]
-    public function getAllBooks(BookRepository $bookRepository, SerializerInterface $serializer, Request $request): JsonResponse
+    public function getAllBooks(BookRepository $bookRepository, SerializerInterface $serializer, Request $request, PaginatorInterface $paginator): JsonResponse
     {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 5);
 
-        $books = $bookRepository->findAllWithPagination($page, $limit);
+        $books = $bookRepository->findAll();
+
+        $pagination = $paginator->paginate(
+            $books,
+            $page,
+            $limit
+        );
 
         // $jsonBooks = $serializer->serialize($books,'json');
 
         return $this->json([
-            'books' => $books,
-            'page' => $page,
-            'limit' => $limit,
+            'books' => $pagination->getItems(),
+            'pagination' => [
+                'nextPage' => $this->generateUrl('all_books', ['page' => $page + 1, 'limit' => $limit], UrlGeneratorInterface::ABSOLUTE_URL),
+                'previousPage' => $this->generateUrl('all_books', ['page' => max($page - 1, 1), 'limit' => $limit], UrlGeneratorInterface::ABSOLUTE_URL),
+                'currentPage' => $pagination->getCurrentPageNumber(),
+                'numberOfPages' => ceil($pagination->getTotalItemCount() / $pagination->getItemNumberPerPage()),
+                'limit' => $pagination->getItemNumberPerPage(),
+                'totalItems' => $pagination->getTotalItemCount(),
+            ]
         ], context:[
             'groups' => 'book:view'
         ]);
