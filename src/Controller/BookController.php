@@ -33,6 +33,7 @@ final class BookController extends AbstractController
         $books = $cache->get($idCache, function(ItemInterface $item) use ($bookRepository, $idCache) {
             echo "Cache-miss-for-$idCache\n";
             $item->tag('books_cache');
+            $item->expiresAfter(3600);
             return $bookRepository->findAllBooksWithEagerLoading();
         });
 
@@ -72,8 +73,11 @@ final class BookController extends AbstractController
     }
 
     #[Route('/api/books/{id}', name: 'delete_book', methods: ['DELETE'])]
-    public function deleteBook(Book $book, EntityManagerInterface $em): JsonResponse
+    #[IsGranted('ROLE_ADMIN', message: 'Only admins can delete books.')]
+    public function deleteBook(Book $book, EntityManagerInterface $em, TagAwareCacheInterface $cache): JsonResponse
     {
+        $cache->invalidateTags(['books_cache']);
+
         $em->remove($book);
         $em->flush();
 
