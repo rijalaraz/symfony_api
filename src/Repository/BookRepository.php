@@ -16,7 +16,7 @@ class BookRepository extends ServiceEntityRepository
         parent::__construct($registry, Book::class);
     }
 
-    public function findAllBooksWithEagerLoading(): array
+    public function findAllWithEagerLoading(): array
     {
         $qb = $this->createQueryBuilder('b');
         $query = $qb->getQuery();

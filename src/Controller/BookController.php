@@ -34,8 +34,10 @@ final class BookController extends AbstractController
             echo "Cache-miss-for-$idCache\n";
             $item->tag('books_cache');
             $item->expiresAfter(3600);
-            return $bookRepository->findAllBooksWithEagerLoading();
+            return $bookRepository->findAllWithEagerLoading();
         });
+
+        // $books = $bookRepository->findAll();
 
         $pagination = $paginator->paginate(
             $books,
