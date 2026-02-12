@@ -105,8 +105,8 @@ final class BookController extends AbstractController
             $context);
 
         $errors = $validator->validate($book);
-        if (count($errors) > 0) {
-            return $this->json([
+        if ($errors->count() > 0) {
+            return $this->jms_json([
                 'errors' => $errors,
             ], status: Response::HTTP_BAD_REQUEST);
         }
@@ -143,7 +143,7 @@ final class BookController extends AbstractController
     }
 
     #[Route('/api/books/{id}', name: 'update_book', methods: ['PUT'])]
-    public function updateBook(Book $currentBook, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AuthorRepository $authorRepository, TagAwareCacheInterface $cache): JsonResponse
+    public function updateBook(Book $currentBook, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AuthorRepository $authorRepository, ValidatorInterface $validator, TagAwareCacheInterface $cache): JsonResponse
     {
         $context = DeserializationContext::create()
             ->setAttribute(AbstractNormalizer::OBJECT_TO_POPULATE, $currentBook)
@@ -157,6 +157,13 @@ final class BookController extends AbstractController
             Book::class,
             'json',
             $context);
+
+        $errors = $validator->validate($bookUpdated);
+        if ($errors->count() > 0) {
+            return $this->jms_json([
+                'errors' => $errors,
+            ], status: Response::HTTP_BAD_REQUEST);
+        }
 
         $currentBook->setTitle($bookUpdated->getTitle());
         $currentBook->setCoverText($bookUpdated->getCoverText());
