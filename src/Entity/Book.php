@@ -7,7 +7,51 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Hateoas\Configuration\Annotation as Hateoas;
 
+#[Hateoas\Relation(
+    "self",
+    href: new Hateoas\Route(
+        "detail_book",
+        parameters: ["id" => "expr(object.getId())"],
+        absolute: true
+    ),
+    exclusion: new Hateoas\Exclusion(groups: ["book:view"])
+),
+Hateoas\Relation(
+    "delete",
+    href: new Hateoas\Route(
+        "delete_book",
+        parameters: ["id" => "expr(object.getId())"],
+        absolute: true
+    ),
+    exclusion: new Hateoas\Exclusion(groups: ["book:view"], excludeIf:"expr(not is_granted('ROLE_ADMIN'))")
+),
+Hateoas\Relation(
+    "update",
+    href: new Hateoas\Route(
+        "update_book",
+        parameters: ["id" => "expr(object.getId())"],
+        absolute: true
+    ),
+    exclusion: new Hateoas\Exclusion(groups: ["book:view"])
+),
+Hateoas\Relation(
+    "all",
+    href: new Hateoas\Route(
+        "all_books",
+        absolute: true
+    ),
+    exclusion: new Hateoas\Exclusion(groups: ["book:view"])
+),
+Hateoas\Relation(
+    "create",
+    href: new Hateoas\Route(
+        "create_book",
+        absolute: true
+    ),
+    exclusion: new Hateoas\Exclusion(groups: ["book:view"], excludeIf:"expr(not is_granted('ROLE_ADMIN'))")
+)]
 #[ORM\Entity(repositoryClass: BookRepository::class)]
 class Book
 {
