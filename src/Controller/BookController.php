@@ -85,7 +85,7 @@ final class BookController extends AbstractController
         $em->remove($book);
         $em->flush();
 
-        return $this->json([
+        return $this->jms_json([
             'message' => 'Book deleted successfully',
         ]);
     }
