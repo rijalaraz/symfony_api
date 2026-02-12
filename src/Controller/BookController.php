@@ -25,7 +25,6 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
 final class BookController extends AbstractController
 {
     public function __construct(
-        private readonly TagAwareCacheInterface $cache,
         private readonly SerializerInterface $serializer,
     ) {}
 
@@ -97,6 +96,9 @@ final class BookController extends AbstractController
     {
         $context = DeserializationContext::create()->setGroups(['book:create']);
 
+        /**
+         * @var Book
+         */
         $book = $serializer->deserialize($request->getContent(),
             Book::class,
             'json',
@@ -148,6 +150,9 @@ final class BookController extends AbstractController
             ->setGroups(['book:update']);
 
         // Désérialisation des données reçues
+        /**
+         * @var Book
+         */
         $bookUpdated = $serializer->deserialize($request->getContent(),
             Book::class,
             'json',
