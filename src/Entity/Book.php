@@ -40,6 +40,7 @@ Hateoas\Relation(
     "all",
     href: new Hateoas\Route(
         "all_books",
+        parameters: ["page" => 1, "limit"=> 10],
         absolute: true
     ),
     exclusion: new Hateoas\Exclusion(groups: ["book:view"])
