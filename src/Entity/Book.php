@@ -5,7 +5,7 @@ namespace App\Entity;
 use App\Repository\BookRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
+use JMS\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: BookRepository::class)]
@@ -18,7 +18,7 @@ class Book
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["book:view"])]
+    #[Groups(["book:view","book:create","book:update"])]
     #[Assert\NotBlank(message: "Le titre du livre est obligatoire.")]
     #[Assert\Length(
         min: 1,
@@ -29,11 +29,11 @@ class Book
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(["book:view"])]
+    #[Groups(["book:view","book:create","book:update"])]
     private ?string $coverText = null;
 
-    #[ORM\ManyToOne(inversedBy: 'books', cascade: ['persist'])]
-    #[Groups(["book:view"])]
+    #[ORM\ManyToOne(inversedBy: 'books', cascade: ['persist'] )]
+    #[Groups(["book:view","book:create"])]
     private ?Author $author = null;
 
     public function getId(): ?int

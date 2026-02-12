@@ -6,6 +6,9 @@ use App\Entity\Book;
 use App\Repository\AuthorRepository;
 use App\Repository\BookRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\SerializationContext;
+use JMS\Serializer\SerializerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,29 +18,33 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 final class BookController extends AbstractController
 {
+    public function __construct(
+        private readonly TagAwareCacheInterface $cache,
+        private readonly SerializerInterface $serializer,
+    ) {}
+
     #[Route('/api/books', name: 'all_books', methods: ['GET'])]
-    public function getAllBooks(BookRepository $bookRepository, SerializerInterface $serializer, Request $request, PaginatorInterface $paginator, TagAwareCacheInterface $cache): JsonResponse
+    public function getAllBooks(BookRepository $bookRepository, Request $request, PaginatorInterface $paginator, TagAwareCacheInterface $cache): JsonResponse
     {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
 
-        $idCache = 'books_page_' . $page . '_limit_' . $limit;
+        // $idCache = 'books_page_' . $page . '_limit_' . $limit;
 
-        $books = $cache->get($idCache, function(ItemInterface $item) use ($bookRepository, $idCache) {
-            echo "Cache-miss-for-$idCache\n";
-            $item->tag('books_cache');
-            $item->expiresAfter(3600);
-            return $bookRepository->findAllWithEagerLoading();
-        });
+        // $books = $cache->get($idCache, function(ItemInterface $item) use ($bookRepository, $idCache) {
+        //     echo "Cache-miss-for-$idCache\n";
+        //     $item->tag('books_cache');
+        //     $item->expiresAfter(3600);
+        //     return $bookRepository->findAllWithEagerLoading();
+        // });
 
-        // $books = $bookRepository->findAll();
+        $books = $bookRepository->findAll();
 
         $pagination = $paginator->paginate(
             $books,
@@ -45,33 +52,29 @@ final class BookController extends AbstractController
             $limit
         );
 
-        // $jsonBooks = $serializer->serialize($books,'json');
+        $context = SerializationContext::create()->setGroups(['book:view']);
 
-        return $this->json([
+        return $this->jms_json([
             'books' => $pagination->getItems(),
             'pagination' => [
                 'nextPage' => $this->generateUrl('all_books', ['page' => $page + 1, 'limit' => $limit], UrlGeneratorInterface::ABSOLUTE_URL),
                 'previousPage' => $this->generateUrl('all_books', ['page' => max($page - 1, 1), 'limit' => $limit], UrlGeneratorInterface::ABSOLUTE_URL),
                 'currentPage' => $pagination->getCurrentPageNumber(),
-                'numberOfPages' => ceil($pagination->getTotalItemCount() / $pagination->getItemNumberPerPage()),
+                'numberOfPages' => (int) ceil($pagination->getTotalItemCount() / $pagination->getItemNumberPerPage()),
                 'limit' => $pagination->getItemNumberPerPage(),
                 'totalItems' => $pagination->getTotalItemCount(),
             ]
-        ], context:[
-            'groups' => 'book:view'
-        ]);
+        ], context: $context);
     }
 
     #[Route('/api/books/{id}', name: 'detail_book', methods: ['GET'])]
-    public function getDetailBook(Book $book, SerializerInterface $serializer): JsonResponse
+    public function getDetailBook(Book $book): JsonResponse
     {
-        // $jsonBook = $serializer->serialize($book,'json');
+        $context = SerializationContext::create()->setGroups(['book:view']);
 
-        return $this->json([
+        return $this->jms_json([
             'book' => $book,
-        ], context:[
-            'groups' => 'book:view'
-        ]);
+        ], context: $context);
     }
 
     #[Route('/api/books/{id}', name: 'delete_book', methods: ['DELETE'])]
@@ -92,9 +95,12 @@ final class BookController extends AbstractController
     #[IsGranted('ROLE_ADMIN', message: 'Only admins can create books.')]
     public function createBook(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AuthorRepository $authorRepository, ValidatorInterface $validator): JsonResponse
     {
+        $context = DeserializationContext::create()->setGroups(['book:create']);
+
         $book = $serializer->deserialize($request->getContent(),
             Book::class,
-            'json');
+            'json',
+            $context);
 
         $errors = $validator->validate($book);
         if (count($errors) > 0) {
@@ -124,24 +130,31 @@ final class BookController extends AbstractController
             ['id' => $book->getId()],
             UrlGeneratorInterface::ABSOLUTE_URL);
 
-        return $this->json([
+        $context = SerializationContext::create()->setGroups(['book:view']);
+
+        return $this->jms_json([
             'message' => 'Book created successfully',
             'book' => $book,
         ], status: Response::HTTP_CREATED, headers: [
             'Location' => $location
-        ], context:[
-            'groups' => 'book:view'
-        ]);
+        ], context: $context);
     }
 
     #[Route('/api/books/{id}', name: 'update_book', methods: ['PUT'])]
-    public function updateBook(Book $book, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AuthorRepository $authorRepository): JsonResponse
+    public function updateBook(Book $currentBook, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AuthorRepository $authorRepository, TagAwareCacheInterface $cache): JsonResponse
     {
+        $context = DeserializationContext::create()
+            ->setAttribute(AbstractNormalizer::OBJECT_TO_POPULATE, $currentBook)
+            ->setGroups(['book:update']);
+
         // Désérialisation des données reçues
         $bookUpdated = $serializer->deserialize($request->getContent(),
             Book::class,
             'json',
-            [AbstractNormalizer::OBJECT_TO_POPULATE => $book]);
+            $context);
+
+        $currentBook->setTitle($bookUpdated->getTitle());
+        $currentBook->setCoverText($bookUpdated->getCoverText());
 
         // Récupération de l'ensemble des données envoyées sous forme de tableau
         $content = $request->toArray();
@@ -152,16 +165,38 @@ final class BookController extends AbstractController
         // On cherche l'auteur qui correspond et on l'assigne au livre.
         // Si "find" ne trouve pas l'auteur, alors null sera retourné.
         $author = $authorRepository->find($idAuthor);
-        $bookUpdated->setAuthor($author);
+        $currentBook->setAuthor($author);
 
-        $em->persist($bookUpdated);
         $em->flush();
 
-        return $this->json([
+        // On vide le cache.
+        $cache->invalidateTags(['books_cache']);
+
+        $context = SerializationContext::create()->setGroups(['book:view']);
+
+        return $this->jms_json([
             'message' => 'Book updated successfully',
-            'book' => $bookUpdated,
-        ], context:[
-            'groups' => 'book:view'
-        ]);
+            'book' => $currentBook,
+        ], context: $context);
+    }
+
+    /**
+     * Returns a JsonResponse that uses the serializer component if enabled, or json_encode.
+     *
+     * @param int $status The HTTP status code (200 "OK" by default)
+     */
+    protected function jms_json(mixed $data, int $status = 200, array $headers = [], SerializationContext $context = null): JsonResponse
+    {
+        if ($this->serializer instanceof SerializerInterface) {
+            $json = $this->serializer->serialize($data, 'json', $context);
+
+            return new JsonResponse($json, $status, $headers, true);
+        }
+
+        if (null === $data) {
+            return new JsonResponse('null', $status, $headers, true);
+        }
+
+        return new JsonResponse($data, $status, $headers);
     }
 }
