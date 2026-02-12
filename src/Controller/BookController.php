@@ -30,7 +30,7 @@ final class BookController extends AbstractController
     ) {}
 
     #[Route('/api/books', name: 'all_books', methods: ['GET'])]
-    public function getAllBooks(BookRepository $bookRepository, Request $request, PaginatorInterface $paginator, TagAwareCacheInterface $cache): JsonResponse
+    public function getAllBooks(BookRepository $bookRepository, Request $request, PaginatorInterface $paginator, TagAwareCacheInterface $cache, VersioningService $versioningService): JsonResponse
     {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
@@ -52,7 +52,9 @@ final class BookController extends AbstractController
             $limit
         );
 
+        $version = $versioningService->getVersion();
         $context = SerializationContext::create()->setGroups(['book:view']);
+        $context->setVersion($version);
 
         return $this->jms_json([
             'books' => $pagination->getItems(),
