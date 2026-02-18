@@ -83,7 +83,7 @@ class Book
     private ?Author $author = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(["book:view"])]
+    #[Groups(["book:view","book:create","book:update"])]
     #[Since("2.0")]
     private ?string $comment = null;
 

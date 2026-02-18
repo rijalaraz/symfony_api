@@ -140,6 +140,23 @@ final class BookController extends AbstractController
 
     #[Route('/api/books', name: 'create_book', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN', message: 'Only admins can create books.')]
+    #[OA\RequestBody(
+        description: 'The book to create',
+        required: true,
+        content: new OA\JsonContent(ref: new Model(type: Book::class, groups: ['book:create']))
+    )]
+    #[OA\Response(
+        response: 201,
+        description: 'Book created successfully',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', default: 'Book created successfully'),
+                new OA\Property(property: 'book', ref: new Model(type: Book::class, groups: ['book:view']))
+            ]
+        )
+    )]
+    #[OA\Tag(name: 'Books')]
     public function createBook(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AuthorRepository $authorRepository, ValidatorInterface $validator): JsonResponse
     {
         $context = DeserializationContext::create()->setGroups(['book:create']);
