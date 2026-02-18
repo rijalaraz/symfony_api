@@ -113,6 +113,14 @@ final class BookController extends AbstractController
     }
 
     #[Route('/api/books/{id}', name: 'detail_book', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns the details of a specific book',
+        content: new OA\JsonContent(type:'object', properties: [
+            new OA\Property(property: 'book', ref: new Model(type: Book::class, groups: ['book:view']))
+        ])
+    )]
+    #[OA\Tag(name: 'Books')]
     public function getDetailBook(Book $book, VersioningService $versioningService): JsonResponse
     {
         $version = $versioningService->getVersion();
