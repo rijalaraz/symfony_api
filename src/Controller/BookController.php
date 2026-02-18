@@ -184,20 +184,6 @@ final class BookController extends AbstractController
             ], status: Response::HTTP_BAD_REQUEST);
         }
 
-        // Récupération de l'ensemble des données envoyées sous forme de tableau
-        $content = $request->toArray();
-
-        // Récupération de l'idAuthor. S'il n'est pas défini, alors on met null par défaut.
-        $idAuthor = $content['author']['id'] ?? null;
-        if ($idAuthor) {
-            // On cherche l'auteur qui correspond et on l'assigne au livre.
-            // Si "find" ne trouve pas l'auteur, alors null sera retourné.
-            $author = $authorRepository->find($idAuthor);
-            if ($author) {
-                $book->setAuthor($author);
-            }
-        }
-
         $em->persist($book);
         $em->flush();
 
@@ -216,6 +202,23 @@ final class BookController extends AbstractController
     }
 
     #[Route('/api/books/{id}', name: 'update_book', methods: ['PUT'])]
+    #[OA\RequestBody(
+        description: 'The book to update',
+        required: true,
+        content: new OA\JsonContent(ref: new Model(type: Book::class, groups: ['book:update']))
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Book updated successfully',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', default: 'Book updated successfully'),
+                new OA\Property(property: 'book', ref: new Model(type: Book::class, groups: ['book:view']))
+            ]
+        )
+    )]
+    #[OA\Tag(name: 'Books')]
     public function updateBook(Book $currentBook, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AuthorRepository $authorRepository, ValidatorInterface $validator, TagAwareCacheInterface $cache): JsonResponse
     {
         $context = DeserializationContext::create()
@@ -240,12 +243,13 @@ final class BookController extends AbstractController
 
         $currentBook->setTitle($bookUpdated->getTitle());
         $currentBook->setCoverText($bookUpdated->getCoverText());
+        $currentBook->setComment($bookUpdated->getComment());
 
         // Récupération de l'ensemble des données envoyées sous forme de tableau
         $content = $request->toArray();
 
         // Récupération de l'idAuthor. S'il n'est pas défini, alors on met -1 par défaut.
-        $idAuthor = $content['author']['id'] ?? -1;
+        $idAuthor = $content['author']['id'] ?? $currentBook->getAuthor()?->getId() ?? -1;
 
         // On cherche l'auteur qui correspond et on l'assigne au livre.
         // Si "find" ne trouve pas l'auteur, alors null sera retourné.
