@@ -11,6 +11,7 @@ use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Knp\Component\Pager\PaginatorInterface;
+use Nelmio\ApiDocBundle\Attribute\Model;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +23,7 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use OpenApi\Attributes as OA;
 
 final class BookController extends AbstractController
 {
@@ -30,6 +32,47 @@ final class BookController extends AbstractController
     ) {}
 
     #[Route('/api/books', name: 'all_books', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns a list of books with pagination',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(
+                    property: 'books',
+                    type: 'array',
+                    items: new OA\Items(ref: new Model(type: Book::class, groups: ['book:view']))
+                ),
+                new OA\Property(
+                    property: 'pagination',
+                    type: 'object',
+                    properties: [
+                        new OA\Property(property: 'nextPage', type: 'string'),
+                        new OA\Property(property: 'previousPage', type: 'string'),
+                        new OA\Property(property: 'currentPage', type: 'integer'),
+                        new OA\Property(property: 'numberOfPages', type: 'integer'),
+                        new OA\Property(property: 'limit', type: 'integer'),
+                        new OA\Property(property: 'totalItems', type: 'integer'),
+                    ]
+                ),
+            ]
+        )
+    )]
+    #[OA\Parameter(
+        name: 'page',
+        in: 'query',
+        description: 'The page number to retrieve',
+        required: false,
+        schema: new OA\Schema(type: 'integer', default: 1)
+    )]
+    #[OA\Parameter(
+        name: 'limit',
+        in: 'query',
+        description: 'The number of items per page',
+        required: false,
+        schema: new OA\Schema(type: 'integer', default: 10)
+    )]
+    #[OA\Tag(name: 'Books')]
     public function getAllBooks(BookRepository $bookRepository, Request $request, PaginatorInterface $paginator, TagAwareCacheInterface $cache, VersioningService $versioningService): JsonResponse
     {
         $page = $request->query->getInt('page', 1);
