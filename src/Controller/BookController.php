@@ -31,6 +31,8 @@ final class BookController extends AbstractController
         private readonly SerializerInterface $serializer,
     ) {}
 
+
+
     #[Route('/api/books', name: 'all_books', methods: ['GET'])]
     #[OA\Response(
         response: 200,
@@ -112,13 +114,18 @@ final class BookController extends AbstractController
         ], context: $context);
     }
 
+
+
     #[Route('/api/books/{id}', name: 'detail_book', methods: ['GET'])]
     #[OA\Response(
         response: 200,
         description: 'Returns the details of a specific book',
-        content: new OA\JsonContent(type:'object', properties: [
-            new OA\Property(property: 'book', ref: new Model(type: Book::class, groups: ['book:view']))
-        ])
+        content: new OA\JsonContent(
+            type:'object',
+            properties: [
+                new OA\Property(property: 'book', ref: new Model(type: Book::class, groups: ['book:view']))
+            ]
+        )
     )]
     #[OA\Tag(name: 'Books')]
     public function getDetailBook(Book $book, VersioningService $versioningService): JsonResponse
@@ -132,8 +139,21 @@ final class BookController extends AbstractController
         ], context: $context);
     }
 
+
+
     #[Route('/api/books/{id}', name: 'delete_book', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN', message: 'Only admins can delete books.')]
+    #[OA\Response(
+        response: 200,
+        description: 'Book deleted successfully',
+        content: new OA\JsonContent(
+            type: 'object',
+            properties: [
+                new OA\Property(property: 'message', type: 'string', default: 'Book deleted successfully'),
+            ]
+        )
+    )]
+    #[OA\Tag(name: 'Books')]
     public function deleteBook(Book $book, EntityManagerInterface $em, TagAwareCacheInterface $cache): JsonResponse
     {
         $cache->invalidateTags(['books_cache']);
@@ -145,6 +165,8 @@ final class BookController extends AbstractController
             'message' => 'Book deleted successfully',
         ]);
     }
+
+
 
     #[Route('/api/books', name: 'create_book', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN', message: 'Only admins can create books.')]
@@ -200,6 +222,8 @@ final class BookController extends AbstractController
             'Location' => $location
         ], context: $context);
     }
+
+
 
     #[Route('/api/books/{id}', name: 'update_book', methods: ['PUT'])]
     #[OA\RequestBody(
@@ -268,6 +292,8 @@ final class BookController extends AbstractController
             'book' => $currentBook,
         ], context: $context);
     }
+
+
 
     /**
      * Returns a JsonResponse that uses the serializer component if enabled, or json_encode.
